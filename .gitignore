@@ -1,0 +1,41 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+.python-version
+
+# --- Node / Next.js ---
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+.npm
+.pnp.*
+.eslintcache
+
+# --- Cognee local state ---
+.cognee_system/
+.cognee_data/
+data/
+
+# --- Env / secrets ---
+.env
+.env.*
+.env.example
+
+# --- Editor / OS ---
+.DS_Store
+.idea/
+.vscode/
+*.swp
