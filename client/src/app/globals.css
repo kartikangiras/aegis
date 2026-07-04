@@ -1,0 +1,302 @@
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Spectral:ital,wght@0,400;0,500;1,300;1,400&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ═══════════════════════════════════════════════════════════════════════
+   AEGIS · Memory Operating System design system
+   Editorial direction borrowed from the Manthan project: warm-tinted
+   dark surfaces, Spectral italic display, hairline rules over card
+   chrome, OKLCH color space, no glow shadows, restrained radii.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --color-bg:           oklch(0.135 0.006 75);
+  --color-surface:      oklch(0.165 0.006 75);
+  --color-surface-2:    oklch(0.195 0.006 75);
+  --color-surface-3:    oklch(0.225 0.006 75);
+
+  --color-rule:         oklch(0.30 0.005 75);
+  --color-rule-soft:    oklch(0.22 0.005 75);
+  --color-rule-strong:  oklch(0.40 0.005 75);
+
+  --color-ink:          oklch(0.92 0.004 75);
+  --color-ink-strong:   oklch(0.98 0.003 75);
+  --color-ink-muted:    oklch(0.78 0.006 75);
+  --color-ink-faint:    oklch(0.60 0.006 75);
+  --color-ink-ghost:    oklch(0.45 0.006 75);
+
+  --color-accent:       oklch(0.62 0.15 150);
+  --color-accent-hover: oklch(0.66 0.15 150);
+  --color-accent-soft:  oklch(0.62 0.15 150 / 0.12);
+  --color-accent-tint:  oklch(0.62 0.15 150 / 0.06);
+  --color-accent-line:  oklch(0.62 0.15 150 / 0.30);
+  --color-accent-ink:   oklch(0.18 0.05 150);
+
+  --color-amber:        oklch(0.78 0.13 75);
+  --color-amber-soft:   oklch(0.78 0.13 75 / 0.12);
+  --color-amber-line:   oklch(0.78 0.13 75 / 0.30);
+
+  --color-danger:       oklch(0.62 0.20 28);
+  --color-danger-soft:  oklch(0.62 0.20 28 / 0.12);
+  --color-info:         oklch(0.62 0.13 240);
+  --color-info-soft:    oklch(0.62 0.13 240 / 0.10);
+
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-out-expo:  cubic-bezier(0.16, 1, 0.3, 1);
+
+  --radius-xs: 3px;
+  --radius-sm: 5px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+}
+
+html[data-theme="light"] {
+  --color-bg:           oklch(0.985 0.004 75);
+  --color-surface:      oklch(0.965 0.005 75);
+  --color-surface-2:    oklch(0.945 0.005 75);
+  --color-surface-3:    oklch(0.925 0.005 75);
+
+  --color-rule:         oklch(0.86 0.006 75);
+  --color-rule-soft:    oklch(0.92 0.005 75);
+  --color-rule-strong:  oklch(0.78 0.006 75);
+
+  --color-ink:          oklch(0.20 0.006 75);
+  --color-ink-strong:   oklch(0.13 0.008 75);
+  --color-ink-muted:    oklch(0.40 0.006 75);
+  --color-ink-faint:    oklch(0.55 0.006 75);
+  --color-ink-ghost:    oklch(0.70 0.006 75);
+
+  --color-accent:       oklch(0.50 0.15 150);
+  --color-accent-hover: oklch(0.44 0.15 150);
+  --color-accent-soft:  oklch(0.50 0.15 150 / 0.10);
+  --color-accent-tint:  oklch(0.50 0.15 150 / 0.05);
+  --color-accent-line:  oklch(0.50 0.15 150 / 0.28);
+  --color-accent-ink:   oklch(0.97 0.02 150);
+}
+
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; margin: 0; }
+
+  html {
+    font-family: 'Geist', system-ui, -apple-system, sans-serif;
+    font-size: 16px;
+    line-height: 1.55;
+    color: var(--color-ink);
+    background: var(--color-bg);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    color-scheme: dark;
+  }
+  html[data-theme="light"] { color-scheme: light; }
+
+  body {
+    background: var(--color-bg);
+    color: var(--color-ink);
+    min-height: 100vh;
+    overflow-x: hidden;
+    transition: background-color 240ms var(--ease-out-quart),
+                color 240ms var(--ease-out-quart);
+  }
+
+  h1, h2, h3, h4 {
+    font-weight: 500;
+    letter-spacing: -0.022em;
+    line-height: 1.06;
+    text-wrap: balance;
+    color: var(--color-ink-strong);
+  }
+
+  ::selection { background: var(--color-accent); color: var(--color-accent-ink); }
+  :focus-visible {
+    outline: 1.5px solid var(--color-accent);
+    outline-offset: 2px;
+    border-radius: 3px;
+  }
+
+  button, [role="button"], a {
+    cursor: pointer;
+    transition: color 180ms var(--ease-out-quart),
+                background-color 180ms var(--ease-out-quart),
+                border-color 180ms var(--ease-out-quart),
+                opacity 180ms var(--ease-out-quart);
+  }
+
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-rule);
+    border-radius: 0;
+  }
+  ::-webkit-scrollbar-thumb:hover { background: var(--color-rule-strong); }
+
+  input, textarea, select { font-family: inherit; background: transparent; color: inherit; }
+  input:focus, textarea:focus { outline: none; }
+}
+
+@layer utilities {
+  .font-display { font-family: 'Spectral', 'Iowan Old Style', Georgia, serif; font-weight: 400; }
+  .font-mono    { font-family: 'Geist Mono', ui-monospace, monospace; font-feature-settings: "zero", "ss01"; }
+  .font-sans    { font-family: 'Geist', system-ui, sans-serif; }
+  .display-italic { font-family: 'Spectral', serif; font-style: italic; font-weight: 300; }
+  .nums { font-variant-numeric: tabular-nums; }
+
+  .eyebrow {
+    font-family: 'Geist', system-ui, sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.13em;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: var(--color-ink-faint);
+  }
+
+  .rule { height: 1px; background: var(--color-rule); }
+  .rule-soft { height: 1px; background: var(--color-rule-soft); }
+  .hairline { height: 1px; background: var(--color-rule-soft); width: 100%; }
+
+  .text-balance { text-wrap: balance; }
+  .text-pretty  { text-wrap: pretty; }
+
+  /* ── Standard card surface ── */
+  .card-surface {
+    background: var(--color-surface);
+    border: 1px solid var(--color-rule-soft);
+    border-radius: var(--radius-md);
+    transition: background 180ms var(--ease-out-quart),
+                border-color 180ms var(--ease-out-quart);
+  }
+  .card-surface-hover:hover {
+    background: var(--color-surface-2);
+    border-color: var(--color-rule);
+  }
+
+  /* ── Case card — quiet by default, lifts on hover ──
+       Manthan pattern: translateY(-1px) on hover so cards feel
+       physically responsive without any glow/shadow theatrics. ── */
+  .case-card {
+    display: block;
+    background: var(--color-surface);
+    border: 1px solid var(--color-rule-soft);
+    border-radius: var(--radius-md);
+    transition: background 160ms var(--ease-out-quart),
+                border-color 160ms var(--ease-out-quart),
+                transform 160ms var(--ease-out-quart);
+  }
+  .case-card:hover {
+    background: var(--color-surface-2);
+    border-color: var(--color-rule);
+    transform: translateY(-1px);
+  }
+
+  /* ── Nav row — Manthan sidebar interaction pattern.
+       The active state's background is applied inline from React so
+       these rules only handle hover for non-active rows. ── */
+  .nav-row {
+    cursor: pointer;
+    transition: background 140ms var(--ease-out-quart),
+                color 140ms var(--ease-out-quart);
+  }
+  .nav-row:not(.nav-row-active):hover {
+    background: var(--color-surface);
+    color: var(--color-ink-strong);
+  }
+  .nav-row:not(.nav-row-active):hover .nav-icon-lucide {
+    color: var(--color-ink-muted) !important;
+  }
+
+  /* ── Liquid-glass pill — frosted announcement banner ── */
+  .liquid-glass {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.10);
+    position: relative;
+    overflow: hidden;
+  }
+  .liquid-glass::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(180deg,
+      rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.08) 40%,
+      rgba(255,255,255,0) 60%, rgba(255,255,255,0.12) 100%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  /* ── Hero radial gradient mesh — CSS-only ambient glow ── */
+  .hero-mesh {
+    background:
+      radial-gradient(ellipse 80% 55% at 50% -10%,
+        oklch(0.62 0.15 150 / 0.07) 0%, transparent 70%),
+      radial-gradient(ellipse 50% 40% at 80% 60%,
+        oklch(0.62 0.13 240 / 0.05) 0%, transparent 65%),
+      var(--color-bg);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Animations
+   ═══════════════════════════════════════════════════════════════════════ */
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-up { animation: fade-up 0.5s var(--ease-out-quart) both; }
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.animate-fade-in { animation: fade-in 0.4s var(--ease-out-quart) both; }
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.45; }
+}
+.animate-pulse-dot { animation: pulse-dot 1.8s ease-in-out infinite; }
+
+/* Route-level fade — applied via RouteFader wrapper */
+@keyframes aegis-route-fade {
+  from { opacity: 0; transform: translateY(5px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Mobile nav drawer slide-in */
+@keyframes aegis-drawer-in {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(0); }
+}
+
+/* Stagger helpers for landing hero sections */
+.stagger-1 { animation-delay: 0ms; }
+.stagger-2 { animation-delay: 60ms; }
+.stagger-3 { animation-delay: 120ms; }
+.stagger-4 { animation-delay: 180ms; }
+.stagger-5 { animation-delay: 240ms; }
+
+@keyframes aegis-marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: aegis-marquee 28s linear infinite;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
