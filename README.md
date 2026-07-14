@@ -1,60 +1,127 @@
 # AEGIS
 
-**Memory Operating System for AI Research**
+**Context Memory AI — built on AWS**
 
-> *Research Once. Remember Forever.*
-
----
-
-## The Problem
-
-AI researchers drown in information. They read hundreds of papers, clone repositories, watch conference talks, and write experiment notes — then lose everything to scattered files, dead bookmarks, and fading memory.
-
-**Existing tools don't help.**
-
-- Search engines return pages, not knowledge.
-- RAG systems retrieve snippets, not relationships.
-- Note-taking apps store text, not meaning.
-
-When a researcher asks *"How have agent architectures evolved over the past two years?"*, they need a system that **remembers** — one that has read everything they've given it, built a map of concepts and relationships, and can reason across all of it.
-
-That system doesn't exist. **AEGIS builds it.**
+> *Ingest anything. Remember everything. Query in plain language.*
 
 ---
 
-## The Solution
+## What It Is
 
-AEGIS is a **Memory-Native Research Operating System**. It transforms raw research artifacts — papers, repositories, documentation, notes, videos — into a continuously evolving **knowledge graph** that can be queried in plain language.
+AEGIS is a context memory system for AI applications. It ingests raw content — documents, URLs, PDFs, GitHub repositories, YouTube transcripts, research notes — extracts concepts and relationships, and stores a **persistent knowledge graph** on AWS. You query it in natural language and get cited, grounded answers.
 
-The core insight is simple:
+The core idea:
 
 ```
 Traditional RAG          AEGIS
 ─────────────            ─────
 Question                 Question
-  → Retrieval              → Memory
+  → Retrieve chunks        → Memory
   → LLM                    → Graph Traversal
   → Answer                 → Relationship Discovery
-                           → Temporal Reasoning
-                           → LLM
+                           → LLM (optional)
                            → Cited Answer
 ```
 
-Memory is not a feature. **Memory is the product.**
-
-Built on the [Cognee](https://github.com/topoteretes/cognee) memory lifecycle — `remember`, `recall`, `improve`, `forget` — AEGIS demonstrates how persistent memory can become the foundation layer for AI research systems.
+Memory is not a feature. **Memory is the infrastructure.**
 
 ---
 
-## Goals
+## AWS Infrastructure (Zero Cost)
 
-1. Store research artifacts as **structured memory**, not raw files
-2. Build a **living knowledge graph** that grows with every ingestion
-3. Enable **natural language queries** across the entire graph
-4. Support **memory improvement** — merging duplicates, strengthening relationships
-5. Support **controlled deletion** — remove obsolete datasets cleanly
-6. Remain **backend-agnostic** — swap Cognee, Neo4j, or Qdrant without touching business logic
-7. Deploy anywhere — no Docker lock-in, works on Railway, Render, Vercel
+AEGIS runs entirely on **AWS Free Tier** services — no servers, no clusters, no VPCs.
+
+| Service | Role | Cost |
+|---|---|---|
+| **Amazon S3** | Raw artifact archival (text, PDFs, transcripts) | Free (5 GB / 12 months) |
+| **Amazon DynamoDB** | Persistent knowledge graph + dataset registry | **Always free** (25 GB forever) |
+| **Amazon Bedrock** | Optional LLM answer synthesis (Claude) | Pay-per-token (~$0.001/query) |
+
+DynamoDB tables are created automatically on first run with `PAY_PER_REQUEST` billing. No provisioning, no idle costs.
+
+---
+
+## Architecture
+
+```mermaid
+graph TD
+    User["👤 User"]
+    FE["Frontend\nNext.js 15"]
+    API["FastAPI\nPython 3.12"]
+    MP["MemoryProvider\nInterface"]
+    AWS["AWSProvider\n(primary)"]
+    S3[("Amazon S3\nRaw Artifacts")]
+    DDB[("Amazon DynamoDB\nGraph + Datasets")]
+    Bedrock["Amazon Bedrock\nLLM (optional)"]
+    InMem["InMemoryProvider\nDev / Testing"]
+
+    User --> FE
+    FE -- "/api/*" --> API
+    API --> MP
+    MP --> AWS
+    MP --> InMem
+    AWS --> S3
+    AWS --> DDB
+    AWS --> Bedrock
+```
+
+Every backend implements the same `MemoryProvider` interface — the API and frontend are completely decoupled from the storage layer.
+
+---
+
+## Memory Lifecycle
+
+### Ingestion — `remember()`
+
+```mermaid
+flowchart LR
+    A["Source\n(PDF / URL / GitHub\nYouTube / Text)"] --> B["Parser\n(pypdf / trafilatura\n/ GitHub API / YouTube API)"]
+    B --> C["Plain Text"]
+    C --> D["remember()"]
+    D --> E["Entity &\nConcept Extraction"]
+    E --> F["Graph\nGeneration"]
+    F --> G[("DynamoDB\nNodes + Edges")]
+    F --> H[("S3\nRaw Archive")]
+```
+
+### Retrieval — `recall()`
+
+```mermaid
+flowchart LR
+    Q["Natural Language\nQuestion"] --> R["recall()"]
+    R --> S3["S3: fetch\nraw content"]
+    R --> DDB["DynamoDB: query\ngraph nodes"]
+    S3 --> CB["Context\nBuilder"]
+    DDB --> CB
+    CB --> K{"Bedrock\nconfigured?"}
+    K -- Yes --> LLM["Amazon Bedrock\nClaude"]
+    K -- No --> KW["Keyword\nScoring"]
+    LLM --> ANS["Cited Answer\n+ Evidence"]
+    KW --> ANS
+```
+
+### Graph Optimization — `improve()`
+
+```mermaid
+flowchart TD
+    I["improve()"] --> A["Scan Concept nodes\nin DynamoDB"]
+    A --> B{"Duplicate\nfound?"}
+    B -- Yes --> C["Merge into\ncanonical node"]
+    C --> D["Rewire edges\nin DynamoDB"]
+    B -- No --> E["Build RELATED_TO\nedges for co-occurring\nconcepts"]
+    D --> F["Stronger Graph"]
+    E --> F
+```
+
+### Deletion — `forget()`
+
+```mermaid
+flowchart LR
+    FG["forget(dataset_id)"] --> P["Delete dataset nodes\nfrom DynamoDB"]
+    P --> E["Remove associated\nedges"]
+    E --> V["Delete raw archive\nfrom S3"]
+    V --> U["Graph updated\n(no orphans)"]
+```
 
 ---
 
@@ -62,147 +129,14 @@ Built on the [Cognee](https://github.com/topoteretes/cognee) memory lifecycle �
 
 | Feature | Description |
 |---|---|
-| **Multi-source ingestion** | PDF, URL, Markdown/TXT, GitHub README, YouTube transcript, raw notes |
-| **Memory graph** | Every ingested source becomes nodes and edges in a queryable knowledge graph |
-| **Research Chat** | Natural language Q&A backed by graph traversal + semantic search |
-| **Graph Explorer** | Interactive visualization of the knowledge graph with React Flow |
-| **Memory Manager** | Full CRUD over datasets — remember, improve, forget |
-| **Timeline** | Chronological view of every memory operation |
+| **Multi-source ingestion** | PDF, URL, Markdown/TXT, GitHub README, YouTube transcript, raw text |
+| **Persistent memory** | Knowledge graph stored in DynamoDB — survives server restarts |
+| **Raw archival** | Source content archived to S3 for full-text recall |
+| **Research Chat** | Natural language Q&A backed by graph traversal |
+| **Graph Explorer** | Interactive knowledge graph visualization |
+| **Memory Manager** | Full lifecycle — remember, improve, forget |
 | **Dashboard** | Live stats — nodes, edges, datasets, memory quality score |
-| **Swappable backends** | `InMemoryProvider` for demos, `OpenSourceCogneeProvider` for production |
-| **Deploy-ready** | Vercel + Railway/Render — no Docker required |
-
----
-
-## How It Works
-
-### High-Level Architecture
-
-```mermaid
-graph TD
-    User["👤 Researcher"]
-    FE["Frontend\nNext.js 15"]
-    API["FastAPI\nPython 3.12"]
-    MP["MemoryProvider\nInterface"]
-    IMem["InMemoryProvider\nDemo / Dev"]
-    OSS["OpenSourceCogneeProvider\nHackathon Primary"]
-    Cognee["Cognee OSS"]
-    Neo4j[("Neo4j\nGraph Store")]
-    Qdrant[("Qdrant\nVector Store")]
-    OpenAI["OpenAI\nLLM + Embeddings"]
-
-    User --> FE
-    FE -- "/api/*" --> API
-    API --> MP
-    MP --> IMem
-    MP --> OSS
-    OSS --> Cognee
-    Cognee --> Neo4j
-    Cognee --> Qdrant
-    Cognee --> OpenAI
-```
-
-The application **never** imports Cognee directly in business logic. Every interaction goes through the `MemoryProvider` interface, which means backends are fully swappable by changing one environment variable.
-
----
-
-### Ingestion Pipeline — `remember()`
-
-```mermaid
-flowchart LR
-    A["Source\n(PDF / URL / GitHub\nYouTube / Text)"] --> B["Parser\n(pypdf / trafilatura\n/ GitHub API\n/ YouTube API)"]
-    B --> C["Plain Text\nExtraction"]
-    C --> D["remember()"]
-    D --> E["Entity\nExtraction"]
-    E --> F["Graph\nGeneration"]
-    F --> G["Neo4j\nNodes + Edges"]
-    F --> H["Qdrant\nEmbeddings"]
-```
-
-Each source type has a dedicated parser. The parser's only job is to produce clean text — all graph intelligence happens inside `remember()`.
-
----
-
-### Retrieval Pipeline — `recall()`
-
-```mermaid
-flowchart LR
-    Q["Natural Language\nQuestion"] --> R["recall()"]
-    R --> GS["Graph Search\n(Neo4j traversal)"]
-    R --> VS["Vector Search\n(Qdrant k-NN)"]
-    GS --> CB["Context\nBuilder"]
-    VS --> CB
-    CB --> LLM["OpenAI\nGPT-4o-mini"]
-    LLM --> ANS["Cited Answer\n+ Evidence"]
-```
-
-Recall combines **structural graph traversal** (who cites whom, what method is used by which paper) with **semantic vector search** (concepts near the query embedding). The LLM synthesizes a grounded answer from both.
-
----
-
-### Memory Improvement — `improve()`
-
-```mermaid
-flowchart TD
-    I["improve()"] --> A["Scan all\nConcept nodes"]
-    A --> B{"Duplicate\nfound?"}
-    B -- Yes --> C["Merge into\ncanonical node"]
-    C --> D["Rewire all\nedges"]
-    B -- No --> E["Build RELATED_TO\nedges for co-occurring\nconcepts"]
-    D --> F["Stronger\nGraph"]
-    E --> F
-```
-
-`improve()` runs as a background optimization — it finds near-duplicate concepts (e.g. "LLM" and "Large Language Model"), merges them into a single canonical node, and creates new relationships between concepts that appear in the same dataset. The graph gets denser and more accurate with every run.
-
----
-
-### Forget Pipeline — `forget()`
-
-```mermaid
-flowchart LR
-    FG["forget(dataset_id)"] --> P["Prune dataset\nnodes from graph"]
-    P --> E["Remove associated\nedges"]
-    E --> V["Clean vector\nembeddings"]
-    V --> U["Graph updated\n(no orphans)"]
-```
-
-Deletion is **controlled and clean**. Only nodes exclusively owned by the target dataset are removed. Shared concept nodes (referenced by other datasets) are preserved.
-
----
-
-### The Provider Abstraction
-
-```mermaid
-classDiagram
-    class MemoryProvider {
-        <<abstract>>
-        +remember(content, dataset_name)
-        +recall(query, dataset_id)
-        +improve(dataset_id)
-        +forget(dataset_id)
-        +list_datasets()
-        +get_graph(dataset_id)
-        +get_stats()
-        +health()
-    }
-
-    class InMemoryProvider {
-        +backend_name = "memory"
-        Keyword search · In-process graph
-        No external dependencies
-    }
-
-    class OpenSourceCogneeProvider {
-        +backend_name = "opensource"
-        Cognee OSS · Neo4j · Qdrant · OpenAI
-    }
-
-    MemoryProvider <|-- InMemoryProvider
-    MemoryProvider <|-- OpenSourceCogneeProvider
-```
-
-New backends (AWS Bedrock + Neptune + OpenSearch is planned) implement the same interface — **zero changes to the API, frontend, or business logic**.
+| **Bedrock upgrade** | One env var to switch from keyword to Claude-powered answers |
 
 ---
 
@@ -212,10 +146,10 @@ New backends (AWS Bedrock + Neptune + OpenSearch is planned) implement the same 
 | Tool | Role |
 |---|---|
 | Next.js 15 | App framework (App Router) |
-| TypeScript | Type safety across the entire client |
+| TypeScript | Type safety |
 | Tailwind CSS | Styling |
-| TanStack Query | Server-state management + polling |
-| React Flow | Interactive knowledge graph visualization |
+| TanStack Query | Server-state + polling |
+| React Flow | Knowledge graph visualization |
 | Zustand | UI state |
 | Lucide React | Icons |
 
@@ -227,25 +161,17 @@ New backends (AWS Bedrock + Neptune + OpenSearch is planned) implement the same 
 | Pydantic v2 | Schema validation + settings |
 | uv | Dependency management |
 | pypdf | PDF text extraction |
-| trafilatura | Web article extraction |
+| trafilatura | URL / article extraction |
 | youtube-transcript-api | YouTube transcript fetching |
 | httpx | GitHub README fetching |
 
-### Memory Infrastructure
-| Tool | Role |
+### AWS Infrastructure
+| Service | Role |
 |---|---|
-| Cognee OSS | Memory lifecycle orchestration |
-| Neo4j | Graph store (nodes + relationships) |
-| Qdrant | Vector store (semantic embeddings) |
-| OpenAI GPT-4o-mini | LLM for answer synthesis |
-| OpenAI text-embedding-3-small | Embedding generation |
-
-### Infrastructure
-| Tool | Role |
-|---|---|
-| Docker + Docker Compose | Local Neo4j + Qdrant (optional) |
-| Railway / Render / Fly.io | Backend deployment |
-| Vercel / Netlify | Frontend deployment |
+| Amazon S3 | Raw artifact storage |
+| Amazon DynamoDB | Knowledge graph + dataset registry |
+| Amazon Bedrock | LLM answer synthesis (optional) |
+| boto3 | AWS SDK for Python |
 
 ---
 
@@ -253,66 +179,103 @@ New backends (AWS Bedrock + Neptune + OpenSearch is planned) implement the same 
 
 **Node Types**
 
-`Paper` · `Author` · `Organization` · `Research Area` · `Concept` · `Method` · `Dataset` · `Benchmark` · `Repository` · `Experiment` · `Claim` · `Note`
+`Note` · `Concept` · `Paper` · `Author` · `Organization` · `Method` · `Dataset` · `Repository`
 
 **Relationship Types**
 
-`AUTHORED_BY` · `USES` · `IMPROVES` · `REFERENCES` · `RELATED_TO` · `SUPPORTS` · `CONTRADICTS` · `GENERATED_FROM` · `PART_OF` · `EXTENDS` · `MENTIONS` · `DISCUSSES`
+`MENTIONS` · `RELATED_TO` · `AUTHORED_BY` · `USES` · `REFERENCES` · `EXTENDS` · `SUPPORTS` · `CONTRADICTS`
 
 **Example graph fragment:**
 
 ```mermaid
 graph LR
     T["📄 Attention Is All You Need"] -- USES --> AM["💡 Attention Mechanism"]
-    AM -- USED_BY --> G["🤖 GPT-4"]
+    AM -- RELATED_TO --> G["💡 Self-Attention"]
     G -- RELATED_TO --> ICL["💡 In-Context Learning"]
-    ICL -- PART_OF --> R["📄 ReAct"]
+    ICL -- MENTIONS --> R["📄 ReAct"]
     R -- USES --> COT["💡 Chain of Thought"]
-    R -- EXTENDS --> T
 ```
 
 ---
 
 ## Quick Start
 
-### No-infra demo (InMemory backend)
+### 1. AWS setup (one time)
+
+**Create an IAM user** with these permissions:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:PutObject", "s3:GetObject", "s3:DeleteObject",
+        "s3:ListBucket", "s3:HeadBucket", "s3:CreateBucket"
+      ],
+      "Resource": [
+        "arn:aws:s3:::aegis-memory-*",
+        "arn:aws:s3:::aegis-memory-*/*"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "dynamodb:CreateTable", "dynamodb:DescribeTable",
+        "dynamodb:PutItem", "dynamodb:GetItem", "dynamodb:DeleteItem",
+        "dynamodb:Scan", "dynamodb:Query", "dynamodb:BatchWriteItem"
+      ],
+      "Resource": "arn:aws:dynamodb:*:*:table/aegis-*"
+    }
+  ]
+}
+```
+
+Add `"bedrock:InvokeModel"` to the policy if you want Claude-powered answers.
+
+### 2. Configure
 
 ```bash
-# 1. Backend
+# Copy and fill in your AWS credentials
+cp server/.env.example server/.env
+```
+
+Edit `server/.env`:
+
+```env
+MEMORY_BACKEND=aws
+AWS_REGION=us-east-1
+AWS_ACCESS_KEY_ID=<your-access-key>
+AWS_SECRET_ACCESS_KEY=<your-secret-key>
+S3_BUCKET=aegis-memory-<your-account-id>   # globally unique
+
+# Optional — enable Claude answers:
+# BEDROCK_MODEL_ID=anthropic.claude-3-haiku-20240307-v1:0
+```
+
+### 3. Install and run
+
+```bash
+# Backend
 cd server
-cp .env.example .env          # MEMORY_BACKEND=memory (default)
-uv sync
+uv sync --extra aws
 uv run uvicorn app.main:app --reload --port 8000
 
-# 2. Frontend (separate terminal)
+# Frontend (separate terminal)
 cd client
 npm install
-npm run dev                   # http://localhost:3000
+npm run dev    # http://localhost:3000
 ```
 
-Everything works immediately — no API keys, no Docker, no databases.
+DynamoDB tables and the S3 bucket are created automatically on first start.
 
-### Full Cognee stack (Neo4j + Qdrant + OpenAI)
+### Local dev (no AWS)
 
 ```bash
-# 1. Start stores
-docker compose up -d          # Neo4j (7474/7687) · Qdrant (6333)
-
-# 2. Configure
-cp server/.env.example server/.env
-# Set: MEMORY_BACKEND=opensource  LLM_API_KEY=sk-...
-
-# 3. Run backend + frontend (same as above)
+# Zero infrastructure — in-process memory only
+MEMORY_BACKEND=memory uv run uvicorn app.main:app --reload --port 8000
 ```
-
-### Deploy (no Docker)
-
-| Service | Platform | Notes |
-|---|---|---|
-| Backend | Railway / Render | Set env vars from `server/.env` |
-| Frontend | Vercel | Set `NEXT_PUBLIC_API_URL` to backend URL |
-| Graph store | [Neo4j Aura](https://neo4j.com/cloud/aura/) | Free tier (1 GB) |
-| Vector store | [Qdrant Cloud](https://cloud.qdrant.io/) | Free tier (1 GB) |
 
 ---
 
@@ -320,48 +283,43 @@ cp server/.env.example server/.env
 
 | Method | Endpoint | Operation |
 |---|---|---|
-| `POST` | `/api/sources/text` | Remember text / markdown / notes |
-| `POST` | `/api/sources/url` | Remember a web article |
-| `POST` | `/api/sources/pdf` | Remember a PDF (multipart upload) |
-| `POST` | `/api/sources/github` | Remember a GitHub repository README |
-| `POST` | `/api/sources/youtube` | Remember a YouTube transcript |
+| `POST` | `/api/sources/text` | Ingest text / markdown / notes |
+| `POST` | `/api/sources/url` | Ingest a web article |
+| `POST` | `/api/sources/pdf` | Ingest a PDF (multipart upload) |
+| `POST` | `/api/sources/github` | Ingest a GitHub repository README |
+| `POST` | `/api/sources/youtube` | Ingest a YouTube transcript |
 | `POST` | `/api/memory/recall` | Query memory, get a cited answer |
 | `POST` | `/api/memory/improve` | Optimize the knowledge graph |
 | `DELETE` | `/api/memory/forget` | Delete a dataset and its graph nodes |
 | `GET` | `/api/datasets` | List all stored datasets |
 | `GET` | `/api/graph` | Get nodes + edges for visualization |
 | `GET` | `/api/stats` | Memory statistics |
-| `GET` | `/api/health` | Backend health check |
+| `GET` | `/api/health` | Backend health check (S3 + DynamoDB status) |
 
-Interactive docs available at `http://localhost:8000/docs`.
-
----
-
-## Hackathon Demo Script
-
-1. **Backend** → Settings page confirms provider is healthy
-2. **Upload** → Remember: *Attention Is All You Need*, *ReAct*, *DSPy*, *MCP Docs*, *LangGraph Docs*
-3. **Graph Explorer** → Show the populated knowledge graph
-4. **Chat** → Ask: *"What concepts connect these documents?"*
-5. **Improve** → Run `improve()`, refresh graph — watch new edges appear
-6. **Chat** → Ask: *"How have AI agents evolved?"*
-7. **Forget** → Delete one dataset, refresh graph — nodes pruned cleanly
+Interactive docs: `http://localhost:8000/docs`
 
 ---
 
-## Future Scope — AWS Provider
+## Deployment
 
-The provider interface makes adding a production-scale AWS backend straightforward:
+| Service | Platform | Notes |
+|---|---|---|
+| Backend | Railway / Render / Fly.io | Set env vars from `server/.env` |
+| Frontend | Vercel | Set `NEXT_PUBLIC_API_URL` to backend URL |
+| Storage | AWS (S3 + DynamoDB) | Configured via env vars — no separate infra to deploy |
 
-| Current | AWS Equivalent |
-|---|---|
-| OpenAI | Amazon Bedrock (Claude / Titan) |
-| Neo4j | Amazon Neptune |
-| Qdrant | Amazon OpenSearch Serverless |
-| — | Amazon S3 (raw artifact storage) |
-
-Switching requires: implement `AWSProvider(MemoryProvider)`, set `MEMORY_BACKEND=aws`. Zero changes to the API or frontend.
+The AWS backend requires no managed services beyond S3 and DynamoDB. There is nothing to provision, patch, or scale.
 
 ---
 
-*Built for the Cognee Hackathon — track: Best Open Source Cognee Project.*
+## Scaling Up
+
+When keyword recall is no longer sufficient, enable Bedrock with a single env var:
+
+```env
+BEDROCK_MODEL_ID=anthropic.claude-3-haiku-20240307-v1:0
+```
+
+No code changes needed. The `AWSProvider` detects the model ID at startup and upgrades recall from keyword scoring to full LLM synthesis.
+
+For larger datasets, the same provider interface supports swapping DynamoDB for Neptune (graph) and OpenSearch Serverless (vector) — zero changes to the API or frontend.

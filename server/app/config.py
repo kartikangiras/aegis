@@ -24,9 +24,10 @@ class Settings(BaseSettings):
     )
 
     # --- Backend selection -------------------------------------------------
-    # opensource -> Open Source Cognee + Neo4j + Qdrant  (hackathon primary)
-    # memory     -> in-process provider (testing / local dev without infra)
-    memory_backend: Literal["opensource", "memory"] = "opensource"
+    # aws        -> Amazon S3 + DynamoDB (zero-cost, persistent — primary)
+    # memory     -> in-process provider (dev/testing, no infra required)
+    # opensource -> Cognee + Neo4j + Qdrant (legacy)
+    memory_backend: Literal["opensource", "memory", "aws"] = "aws"
 
     # --- Shared LLM --------------------------------------------------------
     llm_api_key: str = ""
@@ -40,22 +41,28 @@ class Settings(BaseSettings):
     qdrant_url: str = "http://localhost:6333"
     qdrant_api_key: str = ""
 
-    # --- AWS (future scope, see project.md FUTURE SCOPE section) -----------
-    # Placeholder — an AWSProvider (Bedrock + Neptune + OpenSearch) is planned
-    # but not yet implemented. These are read now so configuration is ready.
-    aws_region: str = ""
+    # --- AWS (set MEMORY_BACKEND=aws to activate) -------------------------
+    # Zero-cost stack: S3 (raw archival, free tier) + DynamoDB (graph +
+    # dataset storage, always free). Bedrock is optional — leave blank to
+    # use keyword recall at no cost.
+    aws_region: str = "us-east-1"
     aws_access_key_id: str = ""
     aws_secret_access_key: str = ""
-    bedrock_model_id: str = ""
+    aws_session_token: str = ""  # for temporary/assumed-role credentials
+    s3_bucket: str = ""          # globally unique; leave blank to skip S3
+    dynamodb_table_prefix: str = "aegis"  # tables: aegis-datasets, aegis-nodes, aegis-edges
+    # Bedrock (optional LLM upgrade — pay-per-token; leave blank for free keyword mode)
+    bedrock_model_id: str = ""   # e.g. anthropic.claude-3-haiku-20240307-v1:0
+    bedrock_embedding_model_id: str = ""  # e.g. amazon.titan-embed-text-v2:0
+    # Not used in zero-cost plan (kept for future reference)
     neptune_endpoint: str = ""
     opensearch_endpoint: str = ""
-    s3_bucket: str = ""
 
     # --- Ingestion helpers -------------------------------------------------
     github_token: str = ""
 
     # --- API ---------------------------------------------------------------
-    api_title: str = "AEGIS — Memory Operating System"
+    api_title: str = "AEGIS — Context Memory AI"
     api_version: str = "3.0.0"
     cors_origins: str = "http://localhost:3000"
 
@@ -67,7 +74,7 @@ class Settings(BaseSettings):
     @computed_field  # type: ignore[misc]
     @property
     def qdrant_host(self) -> str:
-        """Host parsed from QDRANT_URL (Cognee expects host + port separately)."""
+        """Host parsed from QDRANT_URL (used by the legacy Cognee provider)."""
         url = self.qdrant_url.replace("http://", "").replace("https://", "")
         return url.split(":")[0]
 

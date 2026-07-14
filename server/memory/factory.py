@@ -3,10 +3,10 @@
 Per ``project.md`` the application startup selects the backend:
 
     if backend == "opensource": provider = OpenSourceCogneeProvider()
+    if backend == "aws":        provider = AWSProvider()
 
 Business logic remains unchanged. New providers can be added without
-changing business logic (an ``aws`` backend is planned — see the
-FUTURE SCOPE: AWS SUPPORT section of ``project.md``).
+changing business logic.
 
 ``get_memory_provider()`` is the single injection point used by the API
 layer (``app/dependencies.py``). It caches the provider for the process
@@ -34,8 +34,13 @@ def _build_provider() -> MemoryProvider:
 
         return OpenSourceCogneeProvider()
 
+    if backend == "aws":
+        from memory.providers.aws_provider import AWSProvider
+
+        return AWSProvider()
+
     raise ValueError(
-        f"Unknown MEMORY_BACKEND={backend!r}. Expected 'opensource' or 'memory'."
+        f"Unknown MEMORY_BACKEND={backend!r}. Expected 'opensource', 'memory', or 'aws'."
     )
 
 

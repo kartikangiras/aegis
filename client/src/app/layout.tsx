@@ -3,8 +3,8 @@ import "./globals.css";
 import { Providers } from "@/components/Providers";
 
 export const metadata: Metadata = {
-  title: "AEGIS — Memory Operating System for AI Research",
-  description: "Research Once. Remember Forever. A memory-native research OS built on Cognee.",
+  title: "AEGIS — Context Memory AI",
+  description: "Ingest anything. Remember forever. Context memory AI built on AWS — persistent knowledge graph powered by S3 and DynamoDB.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

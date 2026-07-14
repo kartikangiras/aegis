@@ -251,7 +251,7 @@ function Brand() {
             className="text-[10.5px] tracking-[0.06em] mt-0.5 truncate"
             style={{ color: "var(--color-ink-faint)" }}
           >
-            Memory OS · Cognee
+            Context Memory AI · AWS
           </div>
         </div>
       </div>

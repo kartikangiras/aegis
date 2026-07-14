@@ -23,9 +23,9 @@ app = FastAPI(
     title=settings.api_title,
     version=settings.api_version,
     description=(
-        "AEGIS — Memory Operating System for AI Research. "
-        "Implements the complete Cognee memory lifecycle: "
-        "remember / recall / improve / forget."
+        "AEGIS — Context Memory AI built on AWS. "
+        "Persistent knowledge graph powered by Amazon S3 + DynamoDB. "
+        "Memory lifecycle: remember / recall / improve / forget."
     ),
 )
 

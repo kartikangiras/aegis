@@ -1,7 +1,6 @@
-"""Full memory lifecycle: remember -> recall -> datasets -> improve -> forget.
+"""Full memory lifecycle integration test: remember → recall → datasets → improve → forget.
 
-This is the canonical demo flow from ``project.md`` → HACKATHON DEMO,
-exercised against the in-memory backend through the real HTTP API.
+Exercises the complete lifecycle against the in-memory backend through the real HTTP API.
 """
 
 from fastapi.testclient import TestClient

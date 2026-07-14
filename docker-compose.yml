@@ -7,7 +7,7 @@ name: aegis
 
 services:
   # ---------------------------------------------------------------------------
-  # Neo4j — Graph store (Cognee graph_engine)
+  # Neo4j — Graph store (legacy `opensource` backend only)
   # ---------------------------------------------------------------------------
   neo4j:
     image: neo4j:5.26-community
@@ -28,7 +28,7 @@ services:
       retries: 10
 
   # ---------------------------------------------------------------------------
-  # Qdrant — Vector store (Cognee vector_engine)
+  # Qdrant — Vector store (legacy `opensource` backend only)
   # ---------------------------------------------------------------------------
   qdrant:
     image: qdrant/qdrant:v1.12.4

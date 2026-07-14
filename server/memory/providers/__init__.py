@@ -6,9 +6,12 @@ Concrete implementations of :class:`memory.base.MemoryProvider`.
   Neo4j + Qdrant.
 - :class:`InMemoryProvider` — dependency-free in-process provider used for
   tests and local development without external infrastructure.
+- :class:`AWSProvider` — zero-cost AWS backend using S3 (raw archival) +
+  DynamoDB (persistent graph + dataset registry). Bedrock LLM synthesis
+  is optional; keyword recall is used by default (free).
 
-Cognee is imported lazily inside the opensource provider so the whole
-package imports cleanly even when Cognee is not installed.
+All providers are imported lazily inside the factory so this package
+imports cleanly even when boto3 or Cognee are not installed.
 """
 
 from memory.base import MemoryProvider
